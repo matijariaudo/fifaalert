@@ -35,7 +35,7 @@
       const data = await res.json();
       const tbody = $("#tabla tbody");
       tbody.empty();
-
+      data.sort((a, b) => b.match.lastTimestamp - a.match.lastTimestamp);  
       data.forEach(item => {
         const { match, tickets, precioMax,precioMin } = item;
         const cantidad = tickets.reduce((acc, t) => acc + t.cantidad, 0);
