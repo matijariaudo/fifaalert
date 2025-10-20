@@ -14,11 +14,13 @@
       position: fixed;
       top: 0; left: 0;
       width: 250px; height: 100vh;
-      background: #b4ffd3;
+      background: #ffffff;
       border-right: 1px solid #ffffff;
       padding-top: 70px;
       z-index: 1040;
       transition: transform 0.3s ease;
+      -webkit-box-shadow: -2px 5px 28px -6px rgba(0,0,0,0.56); 
+box-shadow: -2px 5px 28px -6px rgba(0,0,0,0.56);
     }
 
     .sidebar a {
@@ -27,7 +29,7 @@
     }
     .sidebar a:hover { background:#f0f0f0; }
 
-    @media(max-width:992px){ .sidebar{ transform:translateX(-100%); } }
+    @media(max-width:992px){ .sidebar{ transform:translateX(-100%);padding-top:30px; } }
 
     .overlay {
       position: fixed; top:0; left:0;
@@ -46,7 +48,10 @@
         z-index: 9;
     }
     @media(max-width:992px){ .content{ margin-left:0; } }
-
+    .navbar-top{
+        -webkit-box-shadow: 3px 5px 28px -6px rgba(0,0,0,0.56); 
+        box-shadow: 3px 5px 28px -6px rgba(0,0,0,0.56);
+    }
     .navbar-bottom {
       display:none;
     }
@@ -64,8 +69,10 @@
         display:flex; justify-content:space-around;
         align-items:center; position:fixed;
         bottom:0; left:0; width:100%;
-        background:#b4ffd3; color:#000;
+        background:#ffffff; color:#000;
         padding:8px 0; z-index:9;
+        -webkit-box-shadow: 3px -4px 28px -6px rgba(0,0,0,0.56); 
+        box-shadow: 3px -4px 28px -6px rgba(0,0,0,0.56);
       }
       .navbar-bottom a { color:#000; text-align:center; text-decoration:none; font-size:14px; }
     }
@@ -75,13 +82,13 @@
 
 <div class="overlay zindsideover" id="overlay"></div>
 
-<nav class="navbar navbar-light bg-white fixed-top shadow-sm zind p-1">
+<nav class="navbar navbar-light bg-white fixed-top zind p-1 navbar-top">
   <div class="container-fluid">
     <div class="row w-100 m-0 align-items-center p-2">
       <!-- Botón menú -->
       <div class="col-3 col-md-3">
-        <button class="btn btn-outline-secondary d-lg-none" id="btnMenu" style="border-radius:1000px;">
-          <img src="https://cdn-icons-png.flaticon.com/512/1077/1077114.png" style="width:15px;margin-top:-5px;">
+        <button class="btn btn-outline-secondary d-lg-none" id="btnMenu" style="border-radius:1000px;margin-left:-10px;border-color: rgb(230, 230, 230);">
+          <img src="https://cdn-icons-png.flaticon.com/512/1077/1077114.png" style="width:15px;margin-top:-5px;opacity: .3;">
         </button>
       </div>
 
@@ -104,14 +111,24 @@
 
 
 <div class="sidebar zindside" id="sidebar">
+  <div class="col-12 d-md-none">
+    <img src="https://cdn-icons-png.freepik.com/512/3179/3179858.png" style="width:30px;">
+        <b>WORLD</b>CUP<b>Alerts</b>
+  </div>
   <a href="#" onclick="capa(10)">Perfil</a>
   <a href="#" onclick="capa(11)">Configuración</a>
   <a href="#" onclick="capa(12)">Salir</a>
 </div>
 
 <div class="content">
-  <div class="capa capa_1">📋 Lista de matchs</div>
-  <div class="capa capa_2" style="display:none;">⭐ Favoritos</div>
+  <div class="capa capa_1">
+    <div id="matchList" class="row g-3"></div>
+  </div>
+
+  <div class="capa capa_2" style="display:none;">
+    <h5>⭐ Tus Favoritos</h5>
+    <div id="favList" class="row g-3"></div>
+  </div>
   <div class="capa capa_10" style="display:none;">👤 Perfil usuario</div>
   <div class="capa capa_11" style="display:none;">⚙️ Configuración</div>
   <div class="capa capa_12" style="display:none;">🚪 Cerrar sesión</div>
@@ -122,7 +139,18 @@
   <a href="#" onclick="capa(2)">⭐<br>Your Favs</a>
 </div>
 
+<!-- Modal de agregado -->
+<div class="modal fade" id="favModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content p-3 text-center">
+      <h5 id="favMessage">Agregado a favoritos ✅</h5>
+      <button class="btn btn-dark mt-2" data-bs-dismiss="modal">OK</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
   function capa(i){ $('.capa').hide(); $('.capa_'+i).show(); }
   const sidebar = $('#sidebar');
@@ -137,6 +165,86 @@
     sidebar.css('transform','translateX(-100%)');
     overlay.fadeOut(150);
   });
+  let favs = JSON.parse(localStorage.getItem("favs") || "[]");
+
+  async function cargarDatos() {
+    const res = await fetch("/getdata");
+    const data = await res.json();
+    data.sort((a,b)=>b.match.lastTimestamp - a.match.lastTimestamp);
+    const cont = $("#matchList").empty();
+
+    data.forEach(item=>{
+      const { match, tickets } = item;
+      const cantidad = tickets.reduce((acc,t)=>acc+t.cantidad,0);
+      const fecha = new Date(match.lastTimestamp).toLocaleString();
+      const isFav = favs.includes(match.titulo);
+
+      cont.append(`
+        <div class="col-12 col-md-6">
+          <div class="p-3 bg-white rounded shadow-sm">
+            <small class="text-muted">${fecha}</small>
+            <h5>${match.local} vs ${match.visitante}</h5>
+            <small>${match.estadio}</small>
+            <div class="d-flex justify-content-between align-items-center mt-2">
+              <div>
+                <small>💲${match.priceMin} - ${match.priceMax}</small><br>
+                <small>🎟️ ${cantidad} disponibles</small>
+              </div>
+              <button class="btn ${isFav?'btn-warning':'btn-outline-warning'} btn-sm"
+                onclick="${isFav?`removeFav('${match.titulo}')`:`addFav('${match.titulo}')`}">
+                ${isFav?'★ Remove':'☆ Fav'}
+              </button>
+            </div>
+            <div class="text-end"><small>Último refresh: ${fecha}</small></div>
+          </div>
+        </div>
+      `);
+    });
+    actualizarFavs();
+  }
+
+  function addFav(titulo){
+    if(!favs.includes(titulo)){ favs.push(titulo); }
+    localStorage.setItem("favs",JSON.stringify(favs));
+    $("#favMessage").text("Agregado a favoritos ✅");
+    const modal = new bootstrap.Modal(document.getElementById('favModal'));
+    modal.show();
+    cargarDatos();
+  }
+
+  function removeFav(titulo){
+    favs = favs.filter(f=>f!==titulo);
+    localStorage.setItem("favs",JSON.stringify(favs));
+    $("#favMessage").text("Eliminado de favoritos ❌");
+    const modal = new bootstrap.Modal(document.getElementById('favModal'));
+    modal.show();
+    cargarDatos();
+  }
+
+  function printFav(){
+    const favList = $("#favList").empty();
+    if(!favs.length){ favList.html("<p class='text-muted'>Sin favoritos aún</p>"); return; }
+    favs.forEach(f=> favList.append(`
+      <div class="col-12">
+        <div class="p-3 bg-white rounded shadow-sm d-flex justify-content-between align-items-center">
+          <span>${f}</span>
+          <button class="btn btn-outline-danger btn-sm" onclick="removeFav('${f}')">Eliminar</button>
+        </div>
+      </div>`));
+  }
+
+  function actualizarFavs(){
+    if($('.capa_2').is(':visible')) printFav();
+  }
+
+  // Mostrar capa actualizando favoritos si cambia
+  function capa(i){
+    $('.capa').hide();
+    $('.capa_'+i).show();
+    if(i===2) printFav();
+  }
+
+  cargarDatos();
 </script>
 
 </body>
