@@ -10,12 +10,18 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
 
 const db = await open({
   filename: "./db/tickets.db",
   driver: sqlite3.Database,
 });
+
+
 
 await db.exec(`
   CREATE TABLE IF NOT EXISTS matchs (
