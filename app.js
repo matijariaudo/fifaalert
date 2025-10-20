@@ -28,7 +28,9 @@ await db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     titulo TEXT UNIQUE,
     estadio TEXT,
-    fecha TEXT
+    fecha TEXT,
+    local TEXT, 
+    visitante TEXT
   );
 
   CREATE TABLE IF NOT EXISTS tickets (
@@ -53,14 +55,14 @@ app.post("/api/tickets", async (req, res) => {
   if (!Array.isArray(resultados) || resultados.length === 0)
     return res.status(400).send("Sin datos");
 
-  const { match, estadium, fecha } = resultados[0];
+  const { match, estadium, fecha ,local, visitante} = resultados[0];
   const timestamp = Date.now(); // mismo timestamp para todo el lote
 
   await db.run(
-        `INSERT INTO matchs (titulo, estadio, fecha)
-        VALUES (?, ?, ?)
+        `INSERT INTO matchs (titulo, estadio, fecha, local, visitante)
+        VALUES (?, ?, ?, ?, ?)
         ON CONFLICT(titulo) DO UPDATE SET estadio=excluded.estadio, fecha=excluded.fecha`,
-        [match, estadium, fecha]
+        [match, estadium, fecha, local, visitante]
     );
 
     const matchRow = await db.get(`SELECT id FROM matchs WHERE titulo = ?`, [match]);
@@ -111,6 +113,7 @@ app.get("/api/get_code",async(req,res)=>{
 })
 
 // 📊 GET /getdata → matches + última actualización + tickets
+// 📊 GET /getdata → matches + última actualización + tickets + priceMin/Max
 app.get("/getdata", async (req, res) => {
   const matches = await db.all(`SELECT * FROM matchs`);
   const data = [];
@@ -120,17 +123,35 @@ app.get("/getdata", async (req, res) => {
       `SELECT MAX(timestamp) as lastTimestamp FROM tickets WHERE match_id = ?`,
       [m.id]
     );
+
+    if (!lastTimestamp.lastTimestamp) continue; // si no hay tickets, saltar
+
     const tickets = await db.all(
       `SELECT * FROM tickets WHERE match_id = ? AND timestamp = ?`,
       [m.id, lastTimestamp.lastTimestamp]
     );
+
+    // 🔢 obtener min y max
+    const priceStats = await db.get(
+      `SELECT MIN(precioMin) as priceMin, MAX(precioMax) as priceMax
+       FROM tickets
+       WHERE match_id = ? AND timestamp = ?`,
+      [m.id, lastTimestamp.lastTimestamp]
+    );
+
     data.push({
-      match: { ...m, lastTimestamp: lastTimestamp.lastTimestamp },
+      match: {
+        ...m,
+        lastTimestamp: lastTimestamp.lastTimestamp,
+        priceMin: priceStats.priceMin,
+        priceMax: priceStats.priceMax,
+      },
       tickets,
     });
   }
 
   res.json(data);
 });
+
 
 app.listen(3000, () => console.log("🚀 Server on http://localhost:3000"));

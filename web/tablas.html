@@ -18,7 +18,11 @@
       <tr>
         <th>Match</th>
         <th>Estadio</th>
+        <th>Local</th>
+        <th>Visitante</th>
         <th>Tickets disponibles</th>
+        <th>From</th>
+        <th>To</th>
         <th>Última actualización</th>
       </tr>
     </thead>
@@ -33,14 +37,18 @@
       tbody.empty();
 
       data.forEach(item => {
-        const { match, tickets } = item;
+        const { match, tickets, precioMax,precioMin } = item;
         const cantidad = tickets.reduce((acc, t) => acc + t.cantidad, 0);
         const fecha = new Date(match.lastTimestamp).toLocaleString();
         tbody.append(`
           <tr>
             <td>${match.titulo}</td>
             <td>${match.estadio}</td>
+            <td>${match.local}</td>
+            <td>${match.visitante}</td>
             <td>${cantidad}</td>
+            <td>${match.priceMin}</td>
+            <td>${match.priceMax}</td>
             <td>${fecha}</td>
           </tr>
         `);
