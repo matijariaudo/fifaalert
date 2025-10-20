@@ -87,8 +87,8 @@ box-shadow: -2px 5px 28px -6px rgba(0,0,0,0.56);
     <div class="row w-100 m-0 align-items-center p-2">
       <!-- Botón menú -->
       <div class="col-3 col-md-3">
-        <button class="btn btn-outline-secondary d-lg-none" id="btnMenu" style="border-radius:1000px;margin-left:-10px;border-color: rgb(230, 230, 230);">
-          <img src="https://cdn-icons-png.flaticon.com/512/1077/1077114.png" style="width:15px;margin-top:-5px;opacity: .3;">
+        <button class="btn btn-outline-secondary d-lg-none" id="btnMenu" style="border-radius:1000px;margin-left:-10px;border-color: rgb(230, 230, 230,.0);">
+          <img src="https://icons.veryicon.com/png/o/miscellaneous/user-center/account-settings-11.png" style="width:25px;margin-top:-5px;opacity: .3;">
         </button>
       </div>
 
@@ -101,19 +101,19 @@ box-shadow: -2px 5px 28px -6px rgba(0,0,0,0.56);
       </div>
 
       <!-- Logo -->
-      <div class="col-9 col-md-4 d-flex justify-content-end align-items-center">
-        <img src="https://cdn-icons-png.freepik.com/512/3179/3179858.png" style="width:30px;">
-        <b>WORLD</b>CUP<b>Alerts</b>
+      <div class="col-9 col-md-4 d-flex justify-content-end align-items-center" style="font-size: 1.4em;">
+        <b>WORLD</b><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTRtjo6vU3EEZL7zro4_yHA-bISDEG2r-qoUQ&s" style="width:20px;">CUP
+        <img src="https://www.svgrepo.com/show/133673/notification-bell.svg" style="width:18px">
       </div>
     </div>
   </div>
 </nav>
 
 
-<div class="sidebar zindside" id="sidebar">
-  <div class="col-12 d-md-none">
-    <img src="https://cdn-icons-png.freepik.com/512/3179/3179858.png" style="width:30px;">
-        <b>WORLD</b>CUP<b>Alerts</b>
+<div class="sidebar zindside" id="sidebar" >
+  <div class="col-12 d-md-none p-3" style="font-size: 1.4em;">
+    <b>WORLD</b><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTRtjo6vU3EEZL7zro4_yHA-bISDEG2r-qoUQ&s" style="width:20px;">CUP
+        <img src="https://www.svgrepo.com/show/133673/notification-bell.svg" style="width:18px">
   </div>
   <a href="#" onclick="capa(10)">Perfil</a>
   <a href="#" onclick="capa(11)">Configuración</a>
@@ -122,11 +122,16 @@ box-shadow: -2px 5px 28px -6px rgba(0,0,0,0.56);
 
 <div class="content">
   <div class="capa capa_1">
-    <div id="matchList" class="row g-3"></div>
+    <h5><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ88nNXXLRpkeH_XafGcKa61AcKIaav8VPoXQ&s" style="width:20px"> List of matches</h5>
+    <div id="matchList" class="row g-3" style="margin-top: 10px;padding-bottom: 80px;"></div>
   </div>
 
   <div class="capa capa_2" style="display:none;">
-    <h5>⭐ Tus Favoritos</h5>
+    <h5><img src="https://www.iconpacks.net/icons/2/free-favourite-icon-2765-thumb.png" style="width:18px"> Your favorites</h5>
+    <div id="favList" class="row g-3" style="padding-bottom: 80px"></div>
+  </div>
+  <div class="capa capa_3" style="display:none;">
+    <h5><img src="https://www.svgrepo.com/show/133673/notification-bell.svg" style="width:18px"> Your alerts</h5>
     <div id="favList" class="row g-3"></div>
   </div>
   <div class="capa capa_10" style="display:none;">👤 Perfil usuario</div>
@@ -135,8 +140,9 @@ box-shadow: -2px 5px 28px -6px rgba(0,0,0,0.56);
 </div>
 
 <div class="navbar-bottom zindside">
-  <a href="#" onclick="capa(1)">🏟️<br>All Matchs</a>
-  <a href="#" onclick="capa(2)">⭐<br>Your Favs</a>
+  <a href="#" onclick="capa(1)"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ88nNXXLRpkeH_XafGcKa61AcKIaav8VPoXQ&s" style="width:20px"><br>All Matches</a>
+  <a href="#" onclick="capa(2)"><img src="https://www.iconpacks.net/icons/2/free-favourite-icon-2765-thumb.png" style="width:18px"><br>Your Favs</a>
+  <a href="#" onclick="capa(3)"><img src="https://www.svgrepo.com/show/133673/notification-bell.svg" style="width:18px"><br>Alerts</a>
 </div>
 
 <!-- Modal de agregado -->
@@ -176,32 +182,32 @@ box-shadow: -2px 5px 28px -6px rgba(0,0,0,0.56);
     data.forEach(item=>{
       const { match, tickets } = item;
       const cantidad = tickets.reduce((acc,t)=>acc+t.cantidad,0);
-      const fecha = new Date(match.lastTimestamp).toLocaleString();
+      const minutos = Math.floor((Date.now() - match.lastTimestamp) / 60000);
+      const fecha = `${minutos} min ago`;
       const isFav = favs.includes(match.titulo);
 
       cont.append(`
         <div class="col-12 col-md-6">
           <div class="p-3 bg-white rounded shadow-sm">
-            <small class="text-muted">${fecha}</small>
+            <small class="text-muted"><img src="https://www.iconpacks.net/icons/1/free-time-icon-968-thumb.png" style="width:15px">  ${fecha}</small>
             <h5>${match.local} vs ${match.visitante}</h5>
-            <small>${match.estadio}</small>
+            <small><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ88nNXXLRpkeH_XafGcKa61AcKIaav8VPoXQ&s" style="width:20px"> ${match.estadio}</small>
             <div class="d-flex justify-content-between align-items-center mt-2">
               <div>
                 <small>💲${match.priceMin} - ${match.priceMax}</small><br>
                 <small>🎟️ ${cantidad} disponibles</small>
               </div>
-              <button class="btn ${isFav?'btn-warning':'btn-outline-warning'} btn-sm"
+              <button class="btn ${isFav?'btn-warning':'btn-outline-warning'} btn-sm  m-0"
                 onclick="${isFav?`removeFav('${match.titulo}')`:`addFav('${match.titulo}')`}">
-                ${isFav?'★ Remove':'☆ Fav'}
+                ${isFav?'★':'☆'}
               </button>
             </div>
-            <div class="text-end"><small>Último refresh: ${fecha}</small></div>
           </div>
         </div>
       `);
     });
     $(".image_loaded").css("max-width","20px")
-    actualizarFavs();
+    printFav()
   }
 
   function addFav(titulo){
@@ -222,20 +228,48 @@ box-shadow: -2px 5px 28px -6px rgba(0,0,0,0.56);
     cargarDatos();
   }
 
-  function printFav(){
-    const favList = $("#favList").empty();
-    if(!favs.length){ favList.html("<p class='text-muted'>Sin favoritos aún</p>"); return; }
-    favs.forEach(f=> favList.append(`
-      <div class="col-12">
-        <div class="p-3 bg-white rounded shadow-sm d-flex justify-content-between align-items-center">
-          <span>${f}</span>
-          <button class="btn btn-outline-danger btn-sm" onclick="removeFav('${f}')">Eliminar</button>
-        </div>
-      </div>`));
-  }
 
-  function actualizarFavs(){
-    if($('.capa_2').is(':visible')) printFav();
+  function printFav() {
+    const favList = $("#favList").empty();
+    if (!favs.length) {
+      favList.html("<p class='text-muted'>Sin favoritos aún</p>");
+      return;
+    }
+
+    fetch("/getdata")
+      .then(res => res.json())
+      .then(data => {
+        data
+          .filter(item => favs.includes(item.match.titulo))
+          .forEach(item => {
+            const { match, tickets } = item;
+            const cantidad = tickets.reduce((acc, t) => acc + t.cantidad, 0);
+            const minutos = Math.floor((Date.now() - match.lastTimestamp) / 60000);
+            const fecha = `${minutos} min ago`;
+
+            favList.append(`
+              <div class="col-12 col-md-6">
+                <div class="p-3 bg-white rounded shadow-sm">
+                  <small class="text-muted">
+                    <img src="https://www.iconpacks.net/icons/1/free-time-icon-968-thumb.png" style="width:15px"> ${fecha}
+                  </small>
+                  <h5>${match.local} vs ${match.visitante}</h5>
+                  <small>
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ88nNXXLRpkeH_XafGcKa61AcKIaav8VPoXQ&s" style="width:20px">
+                    ${match.estadio}
+                  </small>
+                  <div class="d-flex justify-content-between align-items-center mt-2">
+                    <div>
+                      <small>💲${match.priceMin} - ${match.priceMax}</small><br>
+                      <small>🎟️ ${cantidad} disponibles</small>
+                    </div>
+                    <button class="btn btn-warning btn-sm m-0" onclick="removeFav('${match.titulo}')">★</button>
+                  </div>
+                </div>
+              </div>
+            `);
+          });
+      });
   }
 
   // Mostrar capa actualizando favoritos si cambia
