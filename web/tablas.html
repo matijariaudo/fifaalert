@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Tabla de Partidos</title>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <style>
+    body { font-family: Arial; padding: 20px; background: #f4f4f4; }
+    table { border-collapse: collapse; width: 100%; background: white; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background: #5AE4A8; color: black; }
+  </style>
+</head>
+<body>
+  <h2>📋 Matches y Últimas Actualizaciones</h2>
+  <table id="tabla">
+    <thead>
+      <tr>
+        <th>Match</th>
+        <th>Estadio</th>
+        <th>Tickets disponibles</th>
+        <th>Última actualización</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    async function cargarDatos() {
+      const res = await fetch("/getdata", { method: "GET" });
+      const data = await res.json();
+      const tbody = $("#tabla tbody");
+      tbody.empty();
+
+      data.forEach(item => {
+        const { match, tickets } = item;
+        const cantidad = tickets.reduce((acc, t) => acc + t.cantidad, 0);
+        const fecha = new Date(match.lastTimestamp).toLocaleString();
+        tbody.append(`
+          <tr>
+            <td>${match.titulo}</td>
+            <td>${match.estadio}</td>
+            <td>${cantidad}</td>
+            <td>${fecha}</td>
+          </tr>
+        `);
+      });
+    }
+
+    cargarDatos();
+    //setInterval(cargarDatos, 10000); // 🔄 refresca cada 10s
+  </script>
+</body>
+</html>
