@@ -115,7 +115,7 @@ app.get("/api/get_code",async(req,res)=>{
 // 📊 GET /getdata → matches + última actualización + tickets
 // 📊 GET /getdata → matches + última actualización + tickets + priceMin/Max
 app.get("/getdata", async (req, res) => {
-  const matches = await db.all(`SELECT * FROM matchs`);
+  const matches = await db.all(`SELECT * FROM matchs ORDER BY titulo`);
   const data = [];
 
   for (const m of matches) {
