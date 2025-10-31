@@ -197,8 +197,9 @@ box-shadow: -2px 5px 28px -6px rgba(0,0,0,0.56);
             <small><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ88nNXXLRpkeH_XafGcKa61AcKIaav8VPoXQ&s" style="width:20px"> ${match.estadio}</small>
             <div class="d-flex justify-content-between align-items-center mt-2">
               <div>
-                <small>💲${match.priceMin} - ${match.priceMax}</small><br>
-                <small>🎟️ ${cantidad} disponibles</small>
+                <small>💲 From USD ${match.priceMin}</small><br>
+                <small>🎟️ ${cantidad} disponibles</small><br>
+                <small><button class="btn btn-xs btn-dark" style="padding:1px 4px;font-size:.7em" onclick="window.open('https://fwc26-resale-usd.tickets.fifa.com${match.link}', '_blank')">Get tickets - <b>Fifa Official Website</b></button></small>
               </div>
               <button class="btn ${isFav?'btn-warning':'btn-outline-warning'} btn-sm  m-0"
                 onclick="${isFav?`removeFav('${match.titulo}')`:`addFav('${match.titulo}')`}">

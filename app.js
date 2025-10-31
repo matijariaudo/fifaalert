@@ -5,8 +5,13 @@ import cors from "cors";
 import get_code from "./get_mail.js";
 import path from "path";
 import { fileURLToPath } from "url";
+import { error } from "console";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+
+let cycle_number=0;
+let cycle_captcha=false;
 
 const app = express();
 app.use(express.json());
@@ -30,7 +35,8 @@ await db.exec(`
     estadio TEXT,
     fecha TEXT,
     local TEXT, 
-    visitante TEXT
+    visitante TEXT,
+    link T
   );
 
   CREATE TABLE IF NOT EXISTS tickets (
@@ -51,18 +57,18 @@ app.get("/", (req, res) => res.sendFile(path.join(__dirname, "web/index.html")))
 app.get("/tablas", (req, res) => res.sendFile(path.join(__dirname, "web/tablas.html")));
 
 app.post("/api/tickets", async (req, res) => {
-  const { resultados } = req.body;
-  if (!Array.isArray(resultados) || resultados.length === 0)
+  const { tickets , match: matchData } = req.body;
+  if (!Array.isArray(tickets) || tickets.length === 0)
     return res.status(400).send("Sin datos");
 
-  const { match, estadium, fecha ,local, visitante} = resultados[0];
+  const { match, stadium, fecha ,local, visitante, link} = matchData;
   const timestamp = Date.now(); // mismo timestamp para todo el lote
 
   await db.run(
-        `INSERT INTO matchs (titulo, estadio, fecha, local, visitante)
-        VALUES (?, ?, ?, ?, ?)
+        `INSERT INTO matchs (titulo, estadio, fecha, local, visitante, link)
+        VALUES (?, ?, ?, ?, ?, ?)
         ON CONFLICT(titulo) DO UPDATE SET estadio=excluded.estadio, fecha=excluded.fecha`,
-        [match, estadium, fecha, local, visitante]
+        [match, stadium, fecha, local, visitante, link]
     );
 
     const matchRow = await db.get(`SELECT id FROM matchs WHERE titulo = ?`, [match]);
@@ -72,18 +78,23 @@ app.post("/api/tickets", async (req, res) => {
     `INSERT INTO tickets (match_id, categoria, precioMin, precioMax, cantidad, timestamp)
     VALUES (?, ?, ?, ?, ?, ?)`
     );
-
-    for (const t of resultados) {
-    if (t.cantidad > 0 && t.precioMin>0) {
-        await insert.run(
-        matchId,
-        t.categoria,
-        t.precioMin,
-        t.precioMax,
-        t.cantidad,
-        timestamp
+    
+    for (const t of tickets) {
+      const precioMin = Number(t.precioMin.replace(/,/g, ""));
+      const precioMax = Number(t.precioMax.replace(/,/g, ""));
+      const cantidad = Number(t.cantidad);
+      if (cantidad > 0 && precioMin > 0) {
+        const info = await insert.run(
+          matchId,
+          t.categoria,
+          precioMin,
+          precioMax,
+          cantidad,
+          timestamp
         );
-    }
+        if (info?.changes > 0) console.log("✅ Insertado",matchId);
+        else console.log("⚠️ No se insertó");
+      }
     }
 
     await insert.finalize();
@@ -108,8 +119,28 @@ app.get("/api/last-tickets/:titulo", async (req, res) => {
 });
 
 app.get("/api/get_code",async(req,res)=>{
-    const codigo=await get_code()
+    const {email}=req.query
+    if (!email){
+      return res.status(400).json({error:"Please, send a email"})
+    }
+    const codigo=await get_code(email) || '';
     return res.status(200).json({codigo})
+})
+
+app.get("/api/set_cycle",async(req,res)=>{
+    const {cycle}=req.query
+    cycle_captcha=false;
+    cycle_number=cycle
+    return res.status(200).json({status:'OK'})
+})
+
+app.get("/api/captcha_alert",async(req,res)=>{
+    cycle_captcha=true;
+    return res.status(200).json({status:'OK'})
+})
+
+app.get("/api/get_cycle",async(req,res)=>{
+    return res.status(200).json({cycle_captcha,cycle_number})
 })
 
 // 📊 GET /getdata → matches + última actualización + tickets
@@ -117,6 +148,8 @@ app.get("/api/get_code",async(req,res)=>{
 app.get("/getdata", async (req, res) => {
   const matches = await db.all(`SELECT * FROM matchs ORDER BY titulo`);
   const data = [];
+
+  
 
   for (const m of matches) {
     const lastTimestamp = await db.get(

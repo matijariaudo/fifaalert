@@ -1,0 +1,10 @@
+{
+  "watch": ["."],
+  "ignore": [
+    "db/**",
+    "node_modules",
+    ".git",
+    "logs",
+    "*.log"
+  ]
+}

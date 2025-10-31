@@ -4,8 +4,14 @@ import { google } from 'googleapis';
 import readline from 'readline';
 
 const CREDENTIALS_PATH = './data_email/credentials.json';
-const TOKEN_PATH = './data_email/token.json';
 const SCOPES = ['https://www.googleapis.com/auth/gmail.readonly'];
+
+const emails=[
+  {"email":"matiariaudo@gmail.com","token_path":"./data_email/matiariaudo.json"},
+  {"email":"fifawc0001@gmail.com","token_path":"./data_email/fifawc0001.json"},
+  {"email":"fifawc0002@gmail.com","token_path":"./data_email/fifawc0002.json"},
+  {"email":"fifawc0003@gmail.com","token_path":"./data_email/fifawc0003.json"}
+]
 
 /** Helpers */
 function base64UrlDecode(base64url) {
@@ -27,18 +33,22 @@ if (!fs.existsSync(CREDENTIALS_PATH)) {
   process.exit(1);
 }
 const credentials = JSON.parse(fs.readFileSync(CREDENTIALS_PATH, 'utf8'));
-const { client_secret, client_id, redirect_uris } = credentials.installed || credentials.web;
-
-/** Create OAuth2 client */
-const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
 
 async function askCode(prompt) {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
   return new Promise(resolve => rl.question(prompt, ans => { rl.close(); resolve(ans); }));
 }
 
-async function authorize() {
+async function authorize(email) {
   try {
+    const TOKEN_PATH = emails.find(a=>a.email==email)?.token_path;
+    console.log("Token Path",TOKEN_PATH)
+    if(!TOKEN_PATH){
+      return null
+    }
+    // Crear nuevo cliente para este email
+    const { client_secret, client_id, redirect_uris } = credentials.installed || credentials.web;
+    const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
     // Si existe token previo
     if (fs.existsSync(TOKEN_PATH)) {
       const token = JSON.parse(fs.readFileSync(TOKEN_PATH, 'utf8'));
@@ -66,6 +76,8 @@ async function authorize() {
     const code = await askCode('Código: ');
     const { tokens } = await oAuth2Client.getToken(code.trim());
     oAuth2Client.setCredentials(tokens);
+    const tokenInfo = await oAuth2Client.getTokenInfo(tokens.access_token);  
+    console.log("🔐 Token pertenece a:", tokenInfo.email);
     fs.writeFileSync(TOKEN_PATH, JSON.stringify(tokens, null, 2));
     console.log('Token guardado en', TOKEN_PATH);
     return oAuth2Client;
@@ -74,13 +86,13 @@ async function authorize() {
     // Borra token corrupto y reintenta
     if (fs.existsSync(TOKEN_PATH)) fs.unlinkSync(TOKEN_PATH);
     console.log('🔄 Token borrado. Intentando de nuevo...');
-    return authorize();
+    return authorize(email);
   }
 }
 
 
-async function listAndReadLatestEmails(maxResults = 5) {
-  const auth = await authorize();
+async function listAndReadLatestEmails(maxResults = 5,email) {
+  const auth = await authorize(email);
   const gmail = google.gmail({ version: 'v1', auth });
 
   const res = await gmail.users.messages.list({ userId: 'me', maxResults, q: '' });
@@ -129,7 +141,8 @@ async function listAndReadLatestEmails(maxResults = 5) {
   return null;
 }
 
-export default async function get_code() {
-  const codigo = await listAndReadLatestEmails(5);
+export default async function get_code(email) {
+  console.log("Buscando correo de ",email)
+  const codigo = await listAndReadLatestEmails(5,email);
   return codigo;
 }
