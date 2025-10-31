@@ -1,3 +1,4 @@
 /data_email/*
 !/data_email/
 /node_modules/
+db/*.db
